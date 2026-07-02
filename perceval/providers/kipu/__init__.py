@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2022 Quandela
+# Copyright (c) 2026 Kipu Quantum GmbH
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .loss_mitigation import photon_recycling, PhotonRecycling
-from .abstract_mitigation import AbstractMitigation
-from .compilation_averaging import CompilationAveraging
+from .kipu_session import Session
+from .kipu_rpc_handler import KipuRPCHandler
+
+__all__ = ["Session", "KipuRPCHandler"]

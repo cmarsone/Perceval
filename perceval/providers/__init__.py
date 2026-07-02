@@ -32,10 +32,12 @@ from perceval.runtime import ISession
 
 from .quandela import Session as QuandelaSession
 from .scaleway import Session as ScalewaySession
+from .kipu import Session as KipuSession
 
 PROVIDER_LIST = {
     "Quandela": QuandelaSession,
     "Scaleway": ScalewaySession,
+    "Kipu": KipuSession,
 }
 
 
