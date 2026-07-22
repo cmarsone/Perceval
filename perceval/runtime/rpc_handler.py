@@ -124,12 +124,7 @@ class RPCHandler:
 
         # first, try the new endpoint
         endpoint = self.build_endpoint(_ENDPOINT_PLATFORM_DETAILS_NEW, quote_name, _PROCESSOR_SECTION)
-        try:
-            response = self.get_request(endpoint)
-        except requests.HTTPError:
-            # try the old endpoint
-            endpoint = self.build_endpoint(_ENDPOINT_PLATFORM_DETAILS, quote_name)
-            response =  self.get_request(endpoint)
+        response = self.get_request(endpoint)
         return response
 
     def create_job(self, payload) -> str:
