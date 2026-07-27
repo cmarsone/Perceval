@@ -174,10 +174,25 @@ def sample_count_to_samples(sample_count: BSCount, **kwargs) -> BSSamples:
 
     :return: the sample list
     """
+    total = sample_count.total()
     try:
         count = _deduce_count(**kwargs)
     except RuntimeError:
-        count = sum(sample_count.values())
+        count = total
+    if count < 0:
+        raise RuntimeError(f"A sample count must be positive (got {count})")
+    if count <= total:
+        # Shuffle then keep only the requested number of samples
+        samples = BSSamples()
+        sample_list = [
+            state
+            for state, nb in sample_count.items()
+            for _ in range(nb)
+        ]
+        random.shuffle(sample_list)
+        samples.extend(sample_list[:count])
+        return samples
+    # Else, do random sampling
     return sample_count_to_probs(sample_count).sample(count, non_null=False)
 
 
