@@ -95,10 +95,10 @@ class RPCHandler:
             get_logger().debug(error_info, channel.general)
             raise requests.HTTPError(f"Could not read json response from url: {endpoint}. \n{e}")
 
-    def post_request(self, endpoint: str, payload: dict | None) -> None | dict:
+    def post_request(self, endpoint: str, cloud_data: dict | None) -> None | dict:                                                                          #PCVL-1255                     
         # requests may throw an IO Exception, let the user deal with it
         try:
-            response = requests.post(endpoint, headers=self.headers, json=payload, timeout=self.request_timeout, proxies=self.proxies)
+            response = requests.post(endpoint, headers=self.headers, json=cloud_data, timeout=self.request_timeout, proxies=self.proxies)                   #PCVL-1255
         except Exception as e:
             error_info = ''.join(traceback.format_stack()[:-1])
             get_logger().debug(error_info, channel.general)
@@ -137,7 +137,7 @@ class RPCHandler:
             response =  self.get_request(endpoint)
         return response
 
-    def create_job(self, payload) -> str:
+    def create_job(self, cloud_data: dict) -> str:                                                                                                             #PCVL-1255
         """create a job
 
         :param payload: the payload to send
@@ -145,7 +145,7 @@ class RPCHandler:
         :return: job id
         """
         endpoint = self.build_endpoint(_ENDPOINT_JOB_CREATE)
-        json_res = self.post_request(endpoint, payload)
+        json_res = self.post_request(endpoint, cloud_data)                                                                                                     #PCVL-1255
         assert _JOB_ID_KEY in json_res, f'Missing {_JOB_ID_KEY} field in create_job response'
         return json_res[_JOB_ID_KEY]
 
