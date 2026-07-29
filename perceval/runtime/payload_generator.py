@@ -45,7 +45,7 @@ __process_id__ = uuid.uuid4()
 
 
 
-class PayloadGenerator:
+class PayloadGenerator:  #rename to cloud_data? 
 
     @staticmethod
     def generate_payload(command: str,
