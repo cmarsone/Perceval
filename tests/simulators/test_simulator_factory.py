@@ -27,15 +27,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from perceval.simulators import SimulatorFactory, Simulator, DelaySimulator, LossSimulator, PolarizationSimulator
+from perceval.simulators import (SimulatorFactory, Simulator, ExqaliburSimulator,
+                                 DelaySimulator, LossSimulator, PolarizationSimulator)
 from perceval.components import BS, PBS, Unitary, PS, TD, LC
 from perceval.runtime import Processor
 from perceval.backends._slos import SLOSBackend
 from perceval.backends._slos_exqalibur import SLOSExqaliburBackend
+from perceval.backends._slos_mpi import SLOSMPIBackend
 from perceval.backends._naive import NaiveBackend
 from perceval.utils import BasicState
 
 import numpy as np
+import exqalibur as xq
+import pytest
 
 
 def test_create_simulator_from_circuit():
@@ -56,6 +60,15 @@ def test_create_simulator_from_circuit():
     simu = SimulatorFactory.build(c, "Naive")
     assert isinstance(simu, Simulator)
     assert isinstance(simu._backend, NaiveBackend)
+
+
+@pytest.mark.skipif(not hasattr(xq, "SLOS_MPI"), reason="Exqalibur was built without MPI support")
+def test_create_simulator_with_slos_mpi():
+    pytest.importorskip("mpi4py")
+    simu = SimulatorFactory.build(BS(), "SLOS_MPI")
+    assert isinstance(simu, Simulator)
+    assert not isinstance(simu, ExqaliburSimulator)
+    assert isinstance(simu._backend, SLOSMPIBackend)
 
 
 def test_create_simulator_from_polarized_circuit():
