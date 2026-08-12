@@ -37,8 +37,7 @@ from .loss_simulator import LossSimulator
 from .polarization_simulator import PolarizationSimulator
 from ._simulator_utils import _unitary_components_to_circuit
 from perceval.components import ACircuit, TD, LC, Experiment, AFFConfigurator
-from perceval.backends import (ABackend, SLOSExqaliburBackend, SLOSMPIBackend,
-                               BACKEND_LIST, ExqaliburBackendWrapper)
+from perceval.backends import ABackend, SLOSExqaliburBackend, BACKEND_LIST, ExqaliburBackendWrapper
 
 
 class SimulatorFactory:
@@ -131,10 +130,7 @@ class SimulatorFactory:
             simulator.set_noise(noise)
 
         else:
-            # StrongSimulator assumes that its backend owns the complete Fock
-            # space and normalizes that result. SLOS_MPI owns only a rank-local
-            # slice, so it must use the rank-local Python backend interface.
-            if isinstance(backend, ExqaliburBackendWrapper) and not isinstance(backend, SLOSMPIBackend):
+            if isinstance(backend, ExqaliburBackendWrapper):
                 simulator = ExqaliburSimulator(backend)
             else:
                 simulator = Simulator(backend)

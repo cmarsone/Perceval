@@ -26,7 +26,7 @@ from perceval.components import ACircuit
 from perceval.utils import BSDistribution, FockState, StateVector
 from perceval.utils.postselect import PostSelect
 
-from ._abstract_backends import AStrongSimulationBackend, ExqaliburBackendWrapper
+from ._abstract_backends import AStrongSimulationBackend
 
 try:
     # Importing mpi4py initializes MPI before the native backend is constructed.
@@ -35,12 +35,13 @@ except ImportError:  # pragma: no cover - depends on the optional MPI environmen
     MPI = None
 
 
-class SLOSMPIBackend(AStrongSimulationBackend, ExqaliburBackendWrapper):
+class SLOSMPIBackend(AStrongSimulationBackend):
     """Rank-local wrapper around Exqalibur's distributed SLOS backend.
 
     Result-producing methods are collective and must be called in the same
-    order on every MPI rank. Distributions, state vectors and amplitude arrays
-    contain only the slice owned by the calling rank.
+    order on every MPI rank. Amplitude arrays and state vectors contain only
+    the slice owned by the calling rank. Probability distributions are merged
+    across ranks so they satisfy Perceval's backend contract.
     """
 
     def __init__(self, mask=None):
@@ -78,7 +79,15 @@ class SLOSMPIBackend(AStrongSimulationBackend, ExqaliburBackendWrapper):
         return abs(self.prob_amplitude(output_state)) ** 2
 
     def prob_distribution(self) -> BSDistribution:
-        return BSDistribution(self._slos.distribution())
+        local_distribution = [
+            (tuple(state), probability)
+            for state, probability in self._slos.distribution().items()
+        ]
+        result = BSDistribution()
+        for rank_distribution in MPI.COMM_WORLD.allgather(local_distribution):
+            for occupations, probability in rank_distribution:
+                result.add(FockState(occupations), probability)
+        return result
 
     def all_prob_ampli(self) -> list[complex]:
         return self._slos.all_amplitudes()
@@ -105,6 +114,3 @@ class SLOSMPIBackend(AStrongSimulationBackend, ExqaliburBackendWrapper):
     @property
     def process_count(self) -> int:
         return self._slos.get_process_count()
-
-    def get_exqalibur_backend(self):
-        return self._slos
