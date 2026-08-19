@@ -45,7 +45,7 @@ __process_id__ = uuid.uuid4()
 
 
 
-class PayloadGenerator:  #rename to cloud_data? 
+class PayloadGenerator:
 
     @staticmethod
     def generate_payload(command: str,
@@ -55,7 +55,7 @@ class PayloadGenerator:  #rename to cloud_data?
                          **kwargs
                          ) -> dict[str, Any]:
         r"""
-        Generate a simple payload containing the experiment, with the following template:
+        Generate payload data containing the experiment, with the following template:
         {
             'pcvl_version': ...
             'process_id': ...
@@ -91,12 +91,12 @@ class PayloadGenerator:  #rename to cloud_data?
         payload[KEY_EXPERIMENT] = serialize(experiment)
 
         global_kwargs = {KEY_PLATFORM_NAME: platform_name} if platform_name else None
-        return PayloadGenerator.generate_global_data(payload, global_kwargs)
+        return PayloadGenerator.generate_cloud_data(payload, global_kwargs)
 
     @staticmethod
-    def generate_global_data(payload: dict, kwargs: dict = None) -> dict:
+    def generate_cloud_data(payload: dict, kwargs: dict = None) -> dict:
         r"""
-        Generate a simple payload containing the experiment, with the following template:
+        Generate payload data containing the experiment, with the following template:
         {
             'pcvl_version': str
             'process_id': str
@@ -109,7 +109,7 @@ class PayloadGenerator:  #rename to cloud_data?
 
         Other parameters can be added to the payload via **kwargs.
         """
-        global_data = {
+        cloud_data = {
             KEY_VERSION: PMetadata.short_version(),
             KEY_PROCESS_ID: str(__process_id__),
             KEY_PAYLOAD: payload,
@@ -117,8 +117,8 @@ class PayloadGenerator:  #rename to cloud_data?
 
         if kwargs is not None:
             for key, value in kwargs.items():
-                global_data[key] = value
-        return global_data
+                cloud_data[key] = value
+        return cloud_data
 
     @staticmethod
     def from_computation(computation: Computation | ComputationIterator,

@@ -73,7 +73,7 @@ class RemoteJob(Job):
     STATUS_REFRESH_DELAY = 1  # minimum job status refresh period (in s)
     _MAX_ERROR = 5
 
-    def __init__(self, request_data: dict, rpc_handler: RPCHandler, job_name: str,                                                                  # request_data -> cloud_data ?
+    def __init__(self, request_data: dict, rpc_handler, job_name: str, # request_data -> cloud_data ?
                  delta_parameters: dict = None, job_context: dict = None,
                  command_param_names: list = None, refresh_progress_delay: int = 3):
         super().__init__(command_param_names=command_param_names)

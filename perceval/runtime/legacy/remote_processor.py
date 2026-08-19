@@ -246,10 +246,10 @@ class RemoteProcessor(AProcessor):
         if self.input_state:
             self.check_input(self.remove_in_heralded_modes(self.input_state))
 
-        cloud_data = PayloadGenerator.generate_payload(command, self.experiment, self._parameters, self.name, **kwargs)                             #PCVL-1255
+        cloud_data = PayloadGenerator.generate_payload(command, self.experiment, self._parameters, self.name, **kwargs)
 
         self.log_resources(command, self._parameters)
-        return cloud_data                                                                                                                           #PCVL-1255
+        return cloud_data
 
     def resume_job(self, job_id: str) -> RemoteJob:
         return RemoteJob.from_id(job_id, self._rpc_handler)
