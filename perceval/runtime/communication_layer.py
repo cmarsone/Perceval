@@ -183,10 +183,11 @@ class RPCBasedCommunicationLayer(CommunicationLayer):
             # This might not be true anymore if we introduce a version 3 someday
             payload = PayloadUpdater.update_payload(payload, self._specs, target_payload_version=1)
 
-        cloud_data = PayloadGenerator.generate_cloud_data(payload,
-                                                            {KEY_PLATFORM_NAME: self._rpc_handler.name,
-                                                             KEY_JOB_NAME: computation.job_name,
-                                                             KEY_JOB_GROUP_NAME: computation.job_group_name})
+        cloud_data = PayloadGenerator.generate_cloud_data_from_payload(
+            payload,
+            {KEY_PLATFORM_NAME: self._rpc_handler.name,
+             KEY_JOB_NAME: computation.job_name,
+             KEY_JOB_GROUP_NAME: computation.job_group_name})
 
         return self._rpc_handler.create_job(serialize(cloud_data))
 

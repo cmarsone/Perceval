@@ -58,7 +58,7 @@ class RemoteJob(Job):
             }
         }
 
-    :param request_data: prepared data for the job. It is extended by an execute_async() call before being sent.
+    :param cloud_data: prepared cloud data for the job. It is extended by an execute_async() call before being sent.
                          It is expected to be prepared by a RemoteProcessor.
     :param rpc_handler: a valid RPC handler to connect to a Cloud provider
     :param job_name: the job name (visible cloud-side)
@@ -73,7 +73,7 @@ class RemoteJob(Job):
     STATUS_REFRESH_DELAY = 1  # minimum job status refresh period (in s)
     _MAX_ERROR = 5
 
-    def __init__(self, request_data: dict, rpc_handler, job_name: str, # request_data -> cloud_data ?
+    def __init__(self, cloud_data: dict, rpc_handler, job_name: str,
                  delta_parameters: dict = None, job_context: dict = None,
                  command_param_names: list = None, refresh_progress_delay: int = 3):
         super().__init__(command_param_names=command_param_names)
@@ -86,7 +86,7 @@ class RemoteJob(Job):
         self._status_refresh_error = 0
         self._id = None
         self.name = job_name
-        self._request_data = make_serialized(request_data)
+        self._cloud_data = make_serialized(cloud_data)
         self._results = None
 
     @property
@@ -126,15 +126,15 @@ class RemoteJob(Job):
     def _from_dict(my_dict: dict, rpc_handler):
         # Perceval <= 1.0.1 stores 'body' containing the computed payload
         body = my_dict.get('body')
-        # Perceval > 1.0.1 stores 'request_data' & 'delta_parameters' & 'job_context' allowing to re-computed the payload
-        request_data = my_dict.get('request_data')
+        # Perceval > 1.0.1 stores 'request_data' & 'delta_parameters' & 'job_context' allowing the payload to be recomputed.
+        cloud_data = my_dict.get('request_data')
         job_context = my_dict.get('job_context')
         delta_parameters = my_dict.get('delta_parameters')
 
-        if my_dict['status'] != 'SUCCESS' and not body and not request_data:
+        if my_dict['status'] != 'SUCCESS' and not body and not cloud_data:
             raise RuntimeError(f"Missing job description")
         name = my_dict.get('name')
-        rj = RemoteJob(request_data or body, rpc_handler, name, delta_parameters, job_context)
+        rj = RemoteJob(cloud_data or body, rpc_handler, name, delta_parameters, job_context)
         rj._id = my_dict['id']
         if my_dict['status'] is not None:
             rj._job_status.status = RunningStatus[my_dict['status']]
@@ -155,12 +155,12 @@ class RemoteJob(Job):
         if not self._job_status.success:
             job_info['delta_parameters'] = self._delta_parameters
             job_info['job_context'] = self._job_context
-            job_info['request_data'] = self._request_data
+            job_info['request_data'] = self._cloud_data
 
         return job_info
 
     def set_job_group_name(self, group_name: str):
-        self._request_data['job_group_name'] = group_name
+        self._cloud_data['job_group_name'] = group_name
 
     def _handle_status_error(self, error):
         """
@@ -244,8 +244,8 @@ class RemoteJob(Job):
             time.sleep(self._refresh_progress_delay)
         return self.get_results()
 
-    def _create_payload_data(self, *args, **kwargs) -> dict:
-        # creates the payload for the job and returns the prepared job data
+    def _create_cloud_data(self, *args, **kwargs) -> dict:
+        # Creates the cloud data for the job and returns it ready to be sent.
         self._handle_params(*args, **kwargs)
         if self._delta_parameters['mapping']:
             if self._job_context is None:
@@ -254,16 +254,16 @@ class RemoteJob(Job):
 
         kwargs = self._delta_parameters['command']
         kwargs['job_context'] = self._job_context
-        request_data = self._request_data
-        request_data['job_name'] = self._name
-        request_data['payload'].update(kwargs)
+        cloud_data = self._cloud_data
+        cloud_data['job_name'] = self._name
+        cloud_data['payload'].update(kwargs)
         self._check_max_shots_samples_validity()
-        return request_data
+        return cloud_data
 
     def execute_async(self, *args, **kwargs) -> RemoteJob:
         assert self._job_status.waiting, "job has already been executed"
         try:
-            self._id = self._rpc_handler.create_job(self._create_payload_data(*args, **kwargs))
+            self._id = self._rpc_handler.create_job(self._create_cloud_data(*args, **kwargs))
             get_logger().info(f"Send payload to the Cloud (got job id: {self._id})", channel.general)
             self._job_status.status = RunningStatus.WAITING
 
@@ -274,7 +274,7 @@ class RemoteJob(Job):
         return self
 
     def _check_max_shots_samples_validity(self):
-        p = self._request_data['payload']
+        p = self._cloud_data['payload']
         if "max_samples" in p and "max_shots" in p:
             if p["max_samples"] > p["max_shots"]:
                 get_logger().warn(f"Lowered 'max_samples' from user defined value ({p['max_samples']}) to 'max_shots' value ({p['max_shots']}) for consistency.",

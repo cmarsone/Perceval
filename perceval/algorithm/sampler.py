@@ -119,8 +119,7 @@ class Sampler(AAlgorithm):
             job_context = None
             if converter:
                 job_context = {"result_mapping": ['perceval.utils', converter.__name__]}
-            cloud_data = {}
-            cloud_data = self._processor.prepare_job_payload(primitive)
+            cloud_data = self._processor.prepare_job_cloud_data(primitive)
             if self._iterator:
                 cloud_data['payload']['iterator'] = self._iterator.iterations
             cloud_data['payload']['max_shots'] = self._max_shots

@@ -240,13 +240,13 @@ class RemoteProcessor(AProcessor):
     def available_commands(self) -> list[str]:
         return self._specs.available_commands
 
-    def prepare_job_payload(self, command: str, **kwargs) -> dict[str, Any]:
+    def prepare_job_cloud_data(self, command: str, **kwargs) -> dict[str, Any]:
         self.check_min_detected_photons_filter()
         self.check_circuit_size(self.circuit_size)
         if self.input_state:
             self.check_input(self.remove_in_heralded_modes(self.input_state))
 
-        cloud_data = PayloadGenerator.generate_payload(command, self.experiment, self._parameters, self.name, **kwargs)
+        cloud_data = PayloadGenerator.generate_cloud_data(command, self.experiment, self._parameters, self.name, **kwargs)
 
         self.log_resources(command, self._parameters)
         return cloud_data

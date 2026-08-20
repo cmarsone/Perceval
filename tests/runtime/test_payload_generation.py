@@ -46,7 +46,7 @@ def test_payload_basics():
     """test payload basics infos"""
     rp = _get_remote_processor()
     rp.min_detected_photons_filter(4)
-    cloud_data = rp.prepare_job_payload(COMMAND_NAME)
+    cloud_data = rp.prepare_job_cloud_data(COMMAND_NAME)
     assert 'platform_name' in cloud_data and cloud_data['platform_name'] == rp._rpc_handler.name
     assert 'pcvl_version' in cloud_data
     assert 'process_id' in cloud_data
@@ -65,7 +65,7 @@ def test_payload_parameters():
     rp.set_parameters(params)
 
     rp.min_detected_photons_filter(0)
-    payload = rp.prepare_job_payload(COMMAND_NAME)['payload']
+    payload = rp.prepare_job_cloud_data(COMMAND_NAME)['payload']
     assert 'parameters' in payload
     for i in range(n_params):
         assert f'param{i}' in payload['parameters']
@@ -86,11 +86,11 @@ def test_payload_cnot():
     rp.with_input(input_state)
 
     with pytest.raises(ValueError):
-        rp.prepare_job_payload(COMMAND_NAME)  # Missing min_detected_photons
+        rp.prepare_job_cloud_data(COMMAND_NAME)  # Missing min_detected_photons
 
     rp.min_detected_photons_filter(4)
 
-    cloud_data = rp.prepare_job_payload(COMMAND_NAME)
+    cloud_data = rp.prepare_job_cloud_data(COMMAND_NAME)
     assert 'platform_name' in cloud_data and cloud_data['platform_name'] == rp._rpc_handler.name
     assert 'pcvl_version' in cloud_data
     assert 'process_id' in cloud_data
@@ -102,7 +102,7 @@ def test_payload_cnot():
         ZIP_PREFIX)  # Circuits are compressed in payloads
 
 def test_payload_generator():
-    cloud_data = PayloadGenerator.generate_payload(COMMAND_NAME)
+    cloud_data = PayloadGenerator.generate_cloud_data(COMMAND_NAME)
 
     assert 'pcvl_version' in cloud_data
     assert 'process_id' in cloud_data

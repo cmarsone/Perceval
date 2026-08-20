@@ -125,7 +125,7 @@ def test_log_resources(mock_info):
         proc_slos, rpc_handler=get_rpc_handler_for_tests()
     )
     remote_processor.with_input(input_state)
-    remote_processor.prepare_job_payload('probs')
+    remote_processor.prepare_job_cloud_data('probs')
     my_dict = _get_last_dict_logged(mock_info.mock_calls[-1].args[0])
     assert SOURCE not in my_dict
     assert my_dict['platform'] == remote_processor._rpc_handler.name
