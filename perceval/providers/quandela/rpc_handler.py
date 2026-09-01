@@ -33,7 +33,11 @@ import traceback
 from urllib.parse import quote_plus
 
 import requests
+
+from perceval.serialization import Serialization, InputArchive
 from perceval.utils.logging import get_logger, channel
+
+from .remote_config import RemoteConfig
 
 _ENDPOINT_PLATFORM_DETAILS = '/api/platform/'
 _ENDPOINT_PLATFORM_DETAILS_NEW = '/api/platforms/'
@@ -48,7 +52,6 @@ _ENDPOINT_JOB_AVAILABILITY = '/api/jobs/availability/'
 _JOB_ID_KEY = 'job_id'
 
 
-# TODO: move this class to providers/quandela
 class RPCHandler:
     """Remote Call Procedure Handler
 
@@ -60,8 +63,19 @@ class RPCHandler:
     :param proxies: dictionary mapping protocol to the URL of the proxy
     """
 
-    def __init__(self, name, url, token, proxies = None):
+    def __init__(self, name, url = None, token = None, proxies = None):
         self.name = name
+
+        remote = RemoteConfig()
+        if token is None:
+            token = remote.get_token()
+        if not token:
+            raise ConnectionError("No token found")
+        if url is None:
+            url = remote.get_url()
+        if proxies is None:
+            proxies = remote.get_proxies()
+
         self.url = url
         self.proxies = proxies
         self.token = token or dict()
@@ -193,3 +207,29 @@ class RPCHandler:
         """
         endpoint = self.build_endpoint(_ENDPOINT_JOB_AVAILABILITY)
         return self.get_request(endpoint)
+
+
+def _load_rpc_handler(
+    handler: RPCHandler,
+    archive: InputArchive,
+    members,
+    version: int,
+):
+    values = {name: archive.create(index) for name, index in members}
+    handler.__init__(
+        name=values["name"],
+        url=values["url"],
+        token = None, # to be filled by RemoteConfig
+        proxies = None, # to be filled by RemoteConfig,
+    )
+    handler.request_timeout = values["request_timeout"]
+
+
+Serialization.register_class(
+    RPCHandler,
+    class_serial_members_write=lambda handler, archive: archive.save_attr(
+        handler, ["name", "url", "request_timeout"]
+    ),
+    class_serial_members_read=_load_rpc_handler,
+    tag="QuandelaRPCHandler",
+)

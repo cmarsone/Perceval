@@ -28,6 +28,7 @@
 # SOFTWARE.
 
 import sys
+from copy import copy
 
 from perceval.backends import ABackend, AStrongSimulationBackend, ExqaliburBackendWrapper, BACKEND_LIST
 from perceval.components import Experiment, Source
@@ -35,10 +36,13 @@ from perceval.simulators import SimulatorFactory, ExqaliburNoisySamplingSimulato
 from perceval.utils import NoiseModel, BasicState, StateVector, SVDistribution, AnnotatedFockState, ProcessorType, \
     ConversionHelper, ProgressCallback, noise_to_perf_dict
 from perceval.utils.logging import get_logger, channel
+from perceval.serialization import InputArchive, Serialization
 
 from .local_computer import LocalComputer
 from .computation import Computation
+from .computation_iterator import ComputationIterator
 from .platform_specs import PlatformSpecs
+from .error_mitigation import Imperfections
 
 
 class SimulatedComputer(LocalComputer):
@@ -73,7 +77,13 @@ class SimulatedComputer(LocalComputer):
 
     @noise.setter
     def noise(self, noise: NoiseModel):
+        if noise is None:
+            noise = NoiseModel()
         self._noise = noise
+
+    def _get_imperfections(self, computation: Computation | ComputationIterator) -> Imperfections:
+        experiment = computation.experiment
+        return Imperfections(experiment.noise or self.noise, computation.experiment.detectors)
 
     def validate_single(self, computation: Computation) -> None:
         super().validate_single(computation)
@@ -283,3 +293,30 @@ class SimulatedComputer(LocalComputer):
     @property
     def performance(self):
         return noise_to_perf_dict(self.noise)
+
+
+_SIMULATED_COMPUTER_MEMBERS = ["_backend", "_error_mitigations", "_parameters", "_noise"]
+
+
+def _save_simulated_computer(computer: SimulatedComputer, archive):
+    serializable_computer = copy(computer)
+    serializable_computer._backend = computer._backend.name
+    return archive.save_attr(serializable_computer, _SIMULATED_COMPUTER_MEMBERS)
+
+
+def _load_simulated_computer(
+    computer: SimulatedComputer,
+    archive: InputArchive,
+    members,
+    version: int,
+):
+    values = {name: value for name, value in members}
+    computer.__init__(archive.create(values.pop("_backend")))
+    archive.load_attr(computer, list(values.items()))
+
+
+Serialization.register_class(
+    SimulatedComputer,
+    class_serial_members_write=_save_simulated_computer,
+    class_serial_members_read=_load_simulated_computer,
+)
