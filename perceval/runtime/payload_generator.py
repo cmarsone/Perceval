@@ -48,6 +48,16 @@ __process_id__ = uuid.uuid4()
 class PayloadGenerator:
 
     @staticmethod
+    def generate_payload(command: str,
+                         experiment: Experiment = None,
+                         params: dict[str, Any] = None,
+                         platform_name: str = None,
+                         **kwargs
+                         ) -> dict[str, Any]:
+        """Compatibility wrapper for legacy remote processors."""
+        return PayloadGenerator.generate_cloud_data(command, experiment, params, platform_name, **kwargs)
+
+    @staticmethod
     def generate_cloud_data(command: str,
                             experiment: Experiment = None,
                             params: dict[str, Any] = None,
@@ -55,7 +65,7 @@ class PayloadGenerator:
                             **kwargs
                             ) -> dict[str, Any]:
         r"""
-        Generate payload data containing the experiment, with the following template:
+        Generate a simple payload containing the experiment, with the following template:
         {
             'pcvl_version': ...
             'process_id': ...
@@ -94,9 +104,9 @@ class PayloadGenerator:
         return PayloadGenerator.generate_cloud_data_from_payload(payload, cloud_data_kwargs)
 
     @staticmethod
-    def generate_cloud_data_from_payload(payload: dict, kwargs: dict = None) -> dict:
+    def generate_cloud_data_from_payload(payload: Any, kwargs: dict = None) -> dict:
         r"""
-        Generate cloud data from a payload, with the following template:
+        Generate a simple payload containing the experiment, with the following template:
         {
             'pcvl_version': str
             'process_id': str
@@ -104,10 +114,10 @@ class PayloadGenerator:
             **kwargs
         }
 
-        :param payload: The payload to include in the cloud data
-        :param kwargs: Other cloud-data fields to insert
+        :param payload: The payload to insert
+        :param kwargs: other arguments to insert
 
-        Other fields can be added to the cloud data via ``kwargs``.
+        Other parameters can be added to the payload via **kwargs.
         """
         cloud_data = {
             KEY_VERSION: PMetadata.short_version(),
